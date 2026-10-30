@@ -169,7 +169,7 @@ export const Light: React.FC = () => {
   };
   const fr: {y: number; I: number}[] = [];
   if (phC > 0) for (let y = SCR0; y <= SCR1; y += 5) fr.push({y, I: intensity(y).I});
-  const plotD = fr.map((f, i) => `${i ? 'L' : 'M'}${(SCRX + 46 + 230 * f.I * screenOn).toFixed(1)},${f.y.toFixed(1)}`).join(' ');
+  const plotD = fr.map((f, i) => `${i ? 'L' : 'M'}${(SCRX + 46 + 150 * f.I * screenOn).toFixed(1)},${f.y.toFixed(1)}`).join(' ');
   const pd = intensity(yP).d / YLAM;
   const arcs: {r: number; op: number; s: number}[] = [];
   if (phC > 0 && rFront > 0) {
@@ -231,7 +231,7 @@ export const Light: React.FC = () => {
               <g opacity={Math.max(eOn, bOn)}>
                 <circle cx={PX} cy={AY} r={8} fill="#fff" />
                 <g opacity={eOn}>
-                  <Arrow x1={PX} y1={AY} x2={PX} y2={AY - pE} color={GREEN} width={7} pulse={false} />
+                  <Arrow x1={PX} y1={AY} x2={PX} y2={AY - pE} color="buoy" width={7} pulse={false} />
                 </g>
                 <g opacity={bOn}>
                   <Arrow x1={PX} y1={AY} x2={pBt[0]} y2={pBt[1]} color="pot" width={7} pulse={false} />
@@ -243,13 +243,13 @@ export const Light: React.FC = () => {
                 </tspan>{' '}
                 medan listrik
               </Label>
-              <Label x={300} y={AY + 112} size={32} color={BCOL} anchor="start" weight={700} opacity={0.4 + 0.6 * bOn}>
+              <Label x={300} y={AY + 205} size={32} color={BCOL} anchor="start" weight={700} opacity={0.4 + 0.6 * bOn}>
                 <tspan fontFamily="Source Serif 4, serif" fontStyle="italic">
                   B
                 </tspan>{' '}
                 medan magnet
               </Label>
-              <Label x={PX} y={AY + 205} size={22} color={C.muted} opacity={Math.max(eOn, bOn) * (1 - nuB)}>
+              <Label x={PX + 380} y={AY + 205} size={22} color={C.muted} opacity={Math.max(eOn, bOn) * (1 - nuB)}>
                 E ⟂ B, keduanya ⟂ arah rambat
               </Label>
               {/* sumber */}
@@ -316,7 +316,7 @@ export const Light: React.FC = () => {
               const on = ramp(t, kw[i] - 0.3, kw[i] + 0.4);
               const near = Math.max(0, 1 - Math.abs(u - (b.a + b.b) / 2) / 0.12);
               return (
-                <Label key={b.key} x={mix(SX0, SX1, (b.a + b.b) / 2)} y={SBY + 56} size={b.key === 'mikro' ? 23 : 25} color={mix(0, 1, near) > 0.5 ? C.ink : C.muted} weight={600} opacity={0.35 + 0.65 * on}>
+                <Label key={b.key} x={mix(SX0, SX1, (b.a + b.b) / 2)} y={SBY + 56} size={b.key === 'mikro' ? 23 : 25} color={C.ink} weight={600} opacity={(0.3 + 0.7 * on) * (0.55 + 0.45 * near)}>
                   {b.name}
                 </Label>
               );
@@ -342,9 +342,6 @@ export const Light: React.FC = () => {
             <path d={wavePts.join(' ')} fill="none" stroke={wCol} strokeOpacity={0.25} strokeWidth={12} strokeLinejoin="round" />
             <path d={wavePts.join(' ')} fill="none" stroke={wCol} strokeWidth={4} strokeLinejoin="round" />
             <line x1={SX0} y1={WY} x2={SX1} y2={WY} stroke={C.faint} strokeWidth={1.5} strokeDasharray="3 8" />
-            <Label x={mx < 900 ? mx + 30 : mx - 30} y={WY - 135} size={28} color={C.press} anchor={mx < 900 ? 'start' : 'end'} weight={700}>
-              λ ≈ {lamB2 > 100 ? 'panjang' : lamB2 > 30 ? 'sedang' : 'sangat pendek'}
-            </Label>
             <g opacity={sameB}>
               <Arrow x1={760} y1={790} x2={1160} y2={790} color="work" width={6} />
               <Label x={960} y={840} size={26} color={C.work} weight={600}>
@@ -408,7 +405,7 @@ export const Light: React.FC = () => {
               <line x1={SCRX + 46} y1={SCR0} x2={SCRX + 46} y2={SCR1} stroke={C.faint} strokeWidth={2} />
               <path d={plotD} fill="none" stroke={GREEN} strokeOpacity={0.25} strokeWidth={10} strokeLinejoin="round" />
               <path d={plotD} fill="none" stroke={GREEN} strokeWidth={3.5} strokeLinejoin="round" />
-              <Label x={SCRX + 170} y={205} size={24} color={C.ink} weight={600}>
+              <Label x={SCRX + 130} y={205} size={24} color={C.ink} weight={600}>
                 I ∝ cos²(πΔ/λ)
               </Label>
             </g>
@@ -422,17 +419,17 @@ export const Light: React.FC = () => {
               </Label>
             </g>
             <g opacity={proof}>
-              <Label x={SCRX + 150} y={SY - 128} size={22} color={GREEN} anchor="start" weight={600}>
+              <Label x={SCRX + 212} y={SY} size={20} color={GREEN} anchor="start" weight={600}>
                 terang: Δ = nλ
               </Label>
-              <Label x={SCRX + 150} y={SY + 66} size={22} color={C.muted} anchor="start" weight={600}>
-                gelap: Δ = (n + ½)λ
+              <Label x={SCRX + 212} y={SY + 66} size={20} color={C.muted} anchor="start" weight={600}>
+                gelap: Δ = (n+½)λ
               </Label>
             </g>
             <Motes x={980} y={SY} rx={360} ry={280} n={12} color="work" opacity={0.25} seed={9} />
           </Stage>
           <Badge x={360} y={235} text="Thomas Young · 1801" color={C.gold} opacity={young} size={28} />
-          <Note x={960} y={845} p={proof} color={GREEN} size={28}>
+          <Note x={960} y={868} p={proof} color={GREEN} size={28}>
             pita terang-gelap = cahaya <span style={{color: GREEN}}>berinterferensi</span> → cahaya adalah gelombang
           </Note>
         </AbsoluteFill>
