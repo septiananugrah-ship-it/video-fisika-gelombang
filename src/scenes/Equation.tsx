@@ -178,7 +178,7 @@ export const Equation: React.FC = () => {
           </g>
 
           {/* panah v mengikuti satu puncak */}
-          <g opacity={vOn * crestOp * (1 - 0.7 * frozen)}>
+          <g opacity={vOn * crestOp * (1 - 0.7 * frozen) * (1 - ramp(t, cue(4) - 0.4, cue(4) + 0.2, EASE_IN_OUT))}>
             <line x1={xc - 56} y1={CY - A - 34} x2={xc + 56} y2={CY - A - 34} stroke={C.work} strokeWidth={5} markerEnd="url(#arrow-work)" />
             <Label x={xc + 84} y={CY - A - 34} size={30} font="serif" italic color={C.work}>
               v
