@@ -50,7 +50,7 @@ const bodyD = (() => {
   return smoothPath([...top, ...bot]) + ' Z';
 })();
 
-const cm = (px: number) => ((px / SL) * 65).toFixed(1).replace('.', ',');
+const cm = (px: number) => ((px / PW) * 65).toFixed(1).replace('.', ',');
 
 export const Music: React.FC = () => {
   const {t, cue, wordOf, dur} = useScene();
@@ -252,9 +252,6 @@ export const Music: React.FC = () => {
           <Label x={272} y={sy} size={21} color="ink" anchor="end" opacity={rows}>
             bentuk nyata
           </Label>
-          <Label x={PL + PW / 2} y={714} size={20} font="mono" color="muted" opacity={rows * b3}>
-            ＋ ＋ … =
-          </Label>
           {/* tiang penjepit */}
           <rect x={pl - 10} y={sy - 52} width={12} height={104} rx={4} fill="#5b6a9e" stroke="#9aa6d6" strokeWidth={1.5} opacity={1 - rows * 0.6} />
           <rect x={PR - 2} y={sy - 52} width={12} height={104} rx={4} fill="#5b6a9e" stroke="#9aa6d6" strokeWidth={1.5} opacity={1 - rows * 0.6} />
@@ -297,7 +294,7 @@ export const Music: React.FC = () => {
             <line x1={pl} y1={sy + 92} x2={pl} y2={sy + 122} stroke={C.muted} strokeWidth={1.5} />
             <line x1={PR} y1={sy + 92} x2={PR} y2={sy + 122} stroke={C.muted} strokeWidth={1.5} />
             <Arrow x1={pl + 4} y1={sy + 107} x2={PR - 4} y2={sy + 107} color="muted" width={2.5} both pulse={false} />
-            <Label x={(pl + PR) / 2} y={sy + 107} size={26} font="mono" color="ink">
+            <Label x={(pl + PR) / 2} y={sy + 136} size={26} font="mono" color="ink">
               {`L = ${cm(PR - pl)} cm`}
             </Label>
           </g>
