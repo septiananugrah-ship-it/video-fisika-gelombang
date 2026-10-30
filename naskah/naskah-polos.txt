@@ -1,0 +1,134 @@
+[00:00] Riak, senar, dan cahaya
+
+Jatuhkan sebutir kerikil ke kolam. Riak menyebar ke segala arah, tetapi daun yang mengapung hanya naik-turun di tempat.
+Petik senar gitar. Senar bergetar, dan beberapa saat kemudian telinga kita mendengar nada.
+Cahaya matahari menempuh seratus lima puluh juta kilometer ruang hampa untuk sampai ke mata kita.
+Ketiganya adalah gelombang:
+getaran yang berjalan, membawa energi tanpa membawa materinya.
+Dan di dunia kuantum, elektron pun ternyata berperilaku seperti gelombang.
+
+[00:47] Peta video
+
+Video ini membahas gelombang dalam tiga bagian.
+Bagian pertama, konsep: jenis gelombang, besaran gelombang, persamaan gelombang, cepat rambat, interferensi, gelombang berdiri, dan bunyi.
+Bagian kedua, gelombang di dunia kimia: cahaya, difraksi sinar-X pada kristal, gelombang materi, dan jembatan ke kuantum.
+Bagian ketiga, penerapan: alat musik, ultrasonografi, dan peredam bising.
+
+[01:21] Bab 01 — Getaran yang merambat
+
+Gelombang lahir dari osilasi. Ketika satu bagian medium bergetar, ia menarik tetangganya ikut bergetar, sedikit terlambat.
+Getaran itu diteruskan dari satu titik ke titik berikutnya. Yang berjalan adalah polanya, bukan mediumnya.
+Bila medium bergetar tegak lurus arah rambat, seperti tali yang dikibaskan, gelombangnya disebut gelombang transversal.
+Bila medium bergetar searah arah rambat, membentuk rapatan dan renggangan seperti pegas slinki, gelombangnya disebut gelombang longitudinal.
+Bunyi di udara adalah gelombang longitudinal. Gelombang pada senar adalah gelombang transversal.
+
+[02:08] Bab 02 — Panjang gelombang, frekuensi, dan cepat rambat
+
+Jarak antara dua puncak yang berurutan disebut panjang gelombang, lambda.
+Banyaknya puncak yang lewat setiap detik adalah frekuensi, f. Waktu antarpuncak adalah periode, T.
+Dalam satu periode, gelombang maju tepat satu panjang gelombang. Jadi cepat rambatnya v sama dengan lambda kali f.
+Bunyi di udara merambat sekitar tiga ratus empat puluh meter per detik.
+Nada empat ratus empat puluh hertz, nada A untuk menyetem alat musik, punya panjang gelombang sekitar tujuh puluh tujuh sentimeter.
+Cepat rambat ditentukan oleh medium. Frekuensi ditentukan oleh sumber getarnya.
+
+[02:54] Bab 03 — Persamaan gelombang
+
+Bagaimana menuliskan gelombang yang berjalan sebagai rumus?
+Simpangan setiap titik bergantung pada dua hal sekaligus: posisinya, x, dan waktunya, t.
+Untuk gelombang sinus yang berjalan ke kanan: y sama dengan A sinus, k x dikurangi omega t.
+k adalah bilangan gelombang, dua pi per lambda. Omega adalah frekuensi sudut, dua pi f, sama seperti pada osilasi.
+Bekukan waktunya, dan kita melihat foto gelombang di sepanjang tali. Bekukan posisinya, dan satu titik itu hanya berosilasi harmonik.
+
+[03:36] Bab 04 — Cepat rambat pada tali
+
+Gelombang pada tali merambat lebih cepat bila talinya lebih tegang, dan lebih lambat bila talinya lebih berat.
+Cepat rambatnya akar dari tegangan dibagi massa per satuan panjang: v sama dengan akar F per mu.
+Ini mirip osilasi pegas: tegangan berperan sebagai kekakuan, massa per panjang berperan sebagai kelembaman.
+Karena itu senar gitar yang tebal menghasilkan nada rendah, dan memutar penyetem untuk mengencangkan senar menaikkan nadanya.
+
+[04:10] Bab 05 — Superposisi dan interferensi
+
+Dua gelombang dapat melewati tempat yang sama tanpa saling menghancurkan.
+Di tempat bertemu, simpangannya dijumlahkan. Inilah prinsip superposisi.
+Bila puncak bertemu puncak, simpangannya saling menguatkan: interferensi konstruktif.
+Bila puncak bertemu lembah, simpangannya saling meniadakan: interferensi destruktif.
+Setelah berpapasan, masing-masing gelombang melanjutkan perjalanannya seolah tidak pernah bertemu.
+
+[04:44] Bab 06 — Gelombang berdiri
+
+Sekarang ikat kedua ujung tali. Gelombang memantul bolak-balik dan bertumpang tindih dengan pantulannya sendiri.
+Hasilnya gelombang berdiri: ada titik yang tidak pernah bergerak, disebut simpul, dan titik yang bergetar paling kuat, disebut perut.
+Karena kedua ujung harus menjadi simpul, hanya gelombang tertentu yang muat: panjang tali harus kelipatan setengah panjang gelombang.
+Lambda ke-n sama dengan dua L per n, dan frekuensinya n kali frekuensi dasar.
+Tali tidak bisa bergetar dengan frekuensi sembarang. Hanya frekuensi tertentu yang diizinkan.
+Batasan membuat pilihan menjadi diskret. Ingat gagasan ini, karena inilah inti kuantisasi.
+
+[05:35] Bab 07 — Bunyi dan efek Doppler
+
+Bunyi adalah rapatan dan renggangan udara yang merambat. Tinggi nada ditentukan frekuensi, keras bunyi ditentukan amplitudo.
+Telinga manusia mendengar sekitar dua puluh hingga dua puluh ribu hertz.
+Bila sumber bunyi mendekat, puncak-puncaknya berdesakan di depan: panjang gelombang memendek dan nadanya naik.
+Bila sumber menjauh, puncaknya merenggang dan nadanya turun. Inilah efek Doppler, seperti sirene ambulans yang lewat.
+
+[06:09] Bab 08 — Cahaya: gelombang elektromagnetik
+
+Cahaya juga gelombang, tetapi yang bergetar bukan medium, melainkan medan listrik dan medan magnet.
+Karena itu cahaya dapat merambat di ruang hampa, dengan kecepatan tiga ratus juta meter per detik.
+Rumusnya sama: c sama dengan lambda kali nu. Cahaya hijau lima ratus nanometer bergetar enam kali sepuluh pangkat empat belas kali per detik.
+Dari gelombang radio, gelombang mikro, inframerah, cahaya tampak, ultraungu, sampai sinar-X, semuanya gelombang yang sama dengan panjang gelombang berbeda.
+Pada tahun delapan belas nol satu, Thomas Young menyinari dua celah sempit, dan di layar muncul pita terang-gelap: bukti bahwa cahaya berinterferensi.
+
+[06:59] Bab 09 — Difraksi sinar-X pada kristal
+
+Bagaimana kimiawan mengetahui susunan atom di dalam kristal garam, padahal atom terlalu kecil untuk dilihat?
+Jarak antarbidang atom dalam kristal hanya sepersekian nanometer, seukuran panjang gelombang sinar-X.
+Sinar-X yang dipantulkan bidang-bidang atom berinterferensi. Pantulan saling menguatkan hanya bila selisih lintasannya kelipatan bulat panjang gelombang.
+Inilah hukum Bragg: n lambda sama dengan dua d sinus theta.
+Untuk natrium klorida dengan sinar-X tembaga, puncak terkuatnya muncul pada sudut sekitar enam belas derajat, sesuai jarak antarbidang nol koma dua delapan nanometer.
+Dari pola titik-titik terang itulah struktur garam, protein, bahkan DNA berhasil diungkap.
+
+[07:52] Bab 10 — Gelombang materi
+
+Pada tahun sembilan belas dua puluh empat, Louis de Broglie mengajukan gagasan berani: bila cahaya bisa bersifat partikel, partikel juga bisa bersifat gelombang.
+Panjang gelombangnya lambda sama dengan h per p, tetapan Planck dibagi momentum.
+Elektron dengan energi lima puluh empat elektronvolt punya panjang gelombang sekitar nol koma satu tujuh nanometer, seukuran jarak antaratom.
+Tahun sembilan belas dua puluh tujuh, Davisson dan Germer menembakkan elektron ke kristal nikel, dan elektron itu berdifraksi persis seperti sinar-X.
+Bola kasti yang dilempar empat puluh meter per detik juga punya panjang gelombang, tetapi hanya sekitar sepuluh pangkat minus tiga puluh empat meter, terlalu kecil untuk teramati.
+
+[08:46] Bab 11 — Jembatan ke dunia kuantum
+
+Sekarang gabungkan dua gagasan: elektron adalah gelombang, dan gelombang yang dikurung hanya boleh berbentuk tertentu.
+Elektron yang terkurung dalam sebuah kotak harus membentuk gelombang berdiri, sama seperti tali yang kedua ujungnya terikat.
+Hanya panjang gelombang tertentu yang muat, jadi hanya momentum tertentu, dan hanya energi tertentu yang diizinkan.
+Inilah asal tingkat energi diskret pada atom dan molekul. Orbital atom tidak lain adalah gelombang berdiri tiga dimensi dari elektron.
+Persamaan Schrödinger, yang menjadi dasar kimia kuantum, adalah persamaan gelombang untuk materi.
+
+[09:32] Bab 12 — Alat musik
+
+Senar gitar adalah tali dengan kedua ujung terikat, jadi ia bergetar dalam gelombang berdiri.
+Senar A sepanjang enam puluh lima sentimeter bergetar dengan nada dasar seratus sepuluh hertz.
+Bersamaan dengan itu, ia juga bergetar pada harmonik dua ratus dua puluh, tiga ratus tiga puluh hertz, dan seterusnya. Campuran harmonik inilah yang memberi warna suara.
+Menekan senar pada fret memperpendek bagian yang bergetar, sehingga panjang gelombang memendek dan nadanya naik.
+
+[10:09] Bab 13 — Ultrasonografi
+
+Ultrasonografi memakai bunyi berfrekuensi jutaan hertz, jauh di atas batas pendengaran.
+Gelombang ini merambat dalam jaringan tubuh sekitar seribu lima ratus empat puluh meter per detik, lalu sebagian memantul di setiap batas jaringan.
+Alat mengukur waktu pantulan. Gema yang kembali setelah enam puluh lima mikrodetik berasal dari kedalaman sekitar lima sentimeter.
+Dari ribuan gema itu, komputer menyusun gambar janin atau organ, tanpa radiasi pengion.
+
+[10:46] Bab 14 — Peredam bising
+
+Headphone peredam bising punya mikrofon kecil yang terus mendengarkan suara sekitar.
+Elektroniknya membuat gelombang tandingan dengan bentuk sama tetapi terbalik: puncak di tempat lembah.
+Kedua gelombang berinterferensi destruktif, dan bising yang sampai ke telinga jauh berkurang.
+Cara ini paling efektif untuk dengung rendah yang teratur, seperti suara mesin pesawat.
+
+[11:15] Bab 15 — Rangkuman
+
+Mari rangkum.
+Gelombang adalah osilasi yang merambat, membawa energi tanpa membawa medium. Cepat rambatnya v sama dengan lambda kali f.
+Gelombang yang bertemu dijumlahkan: saling menguatkan atau saling meniadakan.
+Gelombang yang dikurung membentuk gelombang berdiri, dan hanya frekuensi tertentu yang diizinkan.
+Cahaya adalah gelombang elektromagnetik, sinar-X mengungkap susunan atom, dan elektron pun adalah gelombang dengan lambda sama dengan h per p.
+Jadi, setiap kali melihat sesuatu yang berulang dan merambat, tanyakan: berapa panjang gelombangnya, dan apa yang membatasinya?
