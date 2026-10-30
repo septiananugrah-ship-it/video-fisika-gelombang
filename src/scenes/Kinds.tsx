@@ -24,7 +24,7 @@ const AX1 = 1670;
 const AY = 450;
 const AA = 70;
 const AF = 0.6;
-const DEL = 0.16;
+const DEL = 0.3;
 const SP = (AX1 - AX0) / (NA - 1);
 const MI = 12;
 // plot mini
@@ -45,11 +45,11 @@ const RMK = 1010;
 const LX0 = 400;
 const LX1 = 1640;
 const NL = 56;
-const LA = 26;
+const LA = 34;
 const LF = 0.7;
 const LV = 350;
 const LY = 655;
-const LMK = 23;
+const LMK = 31;
 
 const Ball: React.FC<{x: number; y: number; r?: number; gold?: boolean; op?: number}> = ({x, y, r = 14, gold, op = 1}) => (
   <g opacity={op}>
@@ -69,10 +69,11 @@ const Hand: React.FC<{x: number; y: number; op: number; push?: boolean}> = ({x, 
     ) : (
       <>
         <path d={`M${x - 170},${y + 70} Q${x - 110},${y + 40} ${x - 46},${y + 6}`} fill="none" stroke="#56628f" strokeWidth={22} strokeLinecap="round" />
-        <path d={`M${x - 58},${y - 22} C${x - 40},${y - 32} ${x - 12},${y - 28} ${x + 2},${y - 14} L${x + 2},${y + 16} C${x - 12},${y + 28} ${x - 40},${y + 30} ${x - 58},${y + 22} Z`} fill="#2a3768" stroke={C.cyan} strokeOpacity={0.7} strokeWidth={2.5} />
-        {[-12, -2, 8].map((d) => (
-          <line key={d} x1={x - 22} y1={y + d} x2={x - 4} y2={y + d} stroke={C.cyan} strokeOpacity={0.35} strokeWidth={2} />
+        <rect x={x - 54} y={y - 26} width={58} height={52} rx={16} fill="#2a3768" stroke={C.cyan} strokeOpacity={0.7} strokeWidth={2.5} />
+        {[-13, 0, 13].map((d) => (
+          <path key={d} d={`M${x - 14},${y + d - 6} q16,6 0,12`} fill="none" stroke={C.cyan} strokeOpacity={0.45} strokeWidth={2} />
         ))}
+        <path d={`M${x - 48},${y - 22} q18,-14 34,-2`} fill="none" stroke={C.cyan} strokeOpacity={0.6} strokeWidth={6} strokeLinecap="round" />
       </>
     )}
   </g>
@@ -82,7 +83,7 @@ export const Kinds: React.FC = () => {
   const {t, cue, wordOf, dur} = useScene();
 
   // ---------------- (A) rantai partikel ----------------
-  const t0 = cue(0) + 0.5;
+  const t0 = wordOf(0, 'Ketika') - 0.1;
   const opA = ramp(t, cue(0) - 0.7, cue(0) + 0.4) * (1 - ramp(t, cue(2) - 0.9, cue(2) + 0.1, EASE_IN_OUT));
   const yA = (i: number, tt = t) => sig(tt - t0 - i * DEL, AA, AF, 0.8);
   const ptsA: [number, number][] = Array.from({length: NA}, (_, i) => [AX0 + i * SP, AY - yA(i)]);
@@ -149,7 +150,6 @@ export const Kinds: React.FC = () => {
   const ren = ramp(t, wordOf(3, 'renggangan') - 0.3, wordOf(3, 'renggangan') + 0.5);
   const lgName = ramp(t, wordOf(3, 'longitudinal') - 0.3, wordOf(3, 'longitudinal') + 0.5);
   // pusat rapatan: kerapatan ∝ 1 − ∂ξ/∂x maksimum di fase τ = (m + ¼)/f… (ξ = A sin(2πf(t − x/v)))
-  const kL = (TAU * LF) / LV;
   const lam = LV / LF;
   const comp = Array.from({length: 6}, (_, j) => {
     const m = Math.floor((t - t3) * LF) - j;
@@ -271,7 +271,7 @@ export const Kinds: React.FC = () => {
           ))}
           <line x1={RMK} y1={ry - RA - 12} x2={RMK} y2={ry + RA + 12} stroke={C.gold} strokeOpacity={0.55 * trLab} strokeWidth={2.5} strokeDasharray="4 6" />
           <Ball x={RMK} y={ymR} r={12} gold />
-          <g opacity={trLab}>
+          <g opacity={trLab * (1 - ex2)}>
             <Arrow x1={RMK - 38} y1={ry} x2={RMK - 38} y2={ry - RA + 4} color="gold" width={4} pulse={false} />
             <Arrow x1={RMK - 38} y1={ry} x2={RMK - 38} y2={ry + RA - 4} color="gold" width={4} pulse={false} />
             <Label x={RMK - 60} y={ry - RA - 34} size={24} color={C.gold} anchor="end" weight={600}>
@@ -301,13 +301,13 @@ export const Kinds: React.FC = () => {
           <Hand x={LX0 - 26 + xi(LX0)} y={LY} op={1} push />
           <rect x={LX0 - 26 + xi(LX0)} y={LY - 56} width={14} height={112} rx={5} fill="#3b4a7a" stroke={C.cyan} strokeOpacity={0.6} strokeWidth={2} />
           {loops.map((x, j) => (
-            <ellipse key={`b${j}`} cx={x} cy={LY} rx={8} ry={46} fill="none" stroke="#2c5f86" strokeWidth={3} strokeDasharray="0 72 74 0" />
+            <path key={`b${j}`} d={`M${x},${LY - 46} C${x - 9},${LY - 30} ${x - 9},${LY + 30} ${x},${LY + 46}`} fill="none" stroke="#2c5f86" strokeWidth={2.5} />
           ))}
           <line x1={LX0} y1={LY - 46} x2={LX1} y2={LY - 46} stroke={C.cyan} strokeOpacity={0.06} strokeWidth={2} />
           {loops.map((x, j) => (
             <path key={j} d={`M${x},${LY - 46} C${x + 11},${LY - 30} ${x + 11},${LY + 30} ${x},${LY + 46}`} fill="none" stroke={j === LMK ? C.gold : C.cyan} strokeWidth={j === LMK ? 4 : 3} strokeLinecap="round" />
           ))}
-          <g opacity={lgLab}>
+          <g opacity={lgLab * (1 - ex1)}>
             <Arrow x1={xmL - 4 - 46} y1={LY - 78} x2={xmL - 4 + 46} y2={LY - 78} color="gold" width={4} both pulse={false} />
             <Label x={xmL} y={LY - 112} size={24} color={C.gold} weight={600}>
               getar ↔
@@ -339,13 +339,11 @@ export const Kinds: React.FC = () => {
           <Twinkles x={LX1 - 120} y={LY} rx={120} ry={60} n={4} color="cyan" opacity={0.5 * ex1} seed={3} />
           <Twinkles x={RX1 - 120} y={330} rx={120} ry={60} n={4} color="cyan" opacity={0.5 * ex2} seed={5} />
         </g>
-        {/* unused helper guard (kL dipakai untuk dokumentasi kerapatan) */}
-        <g opacity={0 * kL} />
       </Stage>
-      <Note x={1640} y={ry + RA + 70} p={ex2} color={C.cyan} anchor="right" size={28}>
+      <Note x={1640} y={ry - RA - 70} p={ex2} color={C.cyan} anchor="right" size={28}>
         senar gitar → <span style={{color: C.cyan}}>transversal</span>
       </Note>
-      <Note x={1640} y={LY + 150} p={ex1} color={C.gold} anchor="right" size={28}>
+      <Note x={1640} y={LY - 110} p={ex1} color={C.gold} anchor="right" size={28}>
         bunyi di udara → <span style={{color: C.cyan}}>longitudinal</span>
       </Note>
     </AbsoluteFill>

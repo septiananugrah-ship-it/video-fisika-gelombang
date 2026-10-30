@@ -6,22 +6,29 @@ import {BRAND} from '../brand';
 import {useScene} from '../SceneContext';
 import {C, FONT} from '../theme';
 
-// Judul bernuansa irama:
-//  · atas: "gelombang bandul" — 15 bandul kecil dengan periode T_i = 24/(20+i) dtk (panjang ∝ T², bandul sederhana),
-//    dilepas bersama dari simpangan yang sama sehingga polanya bergeser menjadi gelombang;
-//  · bawah: lingkaran acuan emas dengan titik berputar; proyeksi tingginya menulis jejak x–t (kosinus) yang merambat.
+// Judul bernuansa gelombang berjalan:
+//  · atas: deretan partikel medium; partikel ke-i mengulang getaran sumber dengan tunda (beda fase),
+//    y_i = A sin(kx_i − ωt) setelah muka gelombang tiba → pola berjalan, tiap partikel hanya naik-turun;
+//  · bawah: lingkaran fase emas di sumber; tinggi titiknya diteruskan ke kanan dengan cepat rambat VT
+//    sehingga terbentuk gelombang kosinus berjalan (toska).
 const CX = 960;
 const CY = 470;
 const fr = (v: number) => ((v % 1) + 1) % 1;
 
-const NP = 15;
-const BAR_Y = 38;
-const PEND = Array.from({length: NP}, (_, i) => {
-  const T = 24 / (20 + i);
-  return {x: 330 + i * 90, T, L: 132 * (T / 1.2) ** 2};
-});
-const TH0 = 0.36;
-const REL = 0.35; // saat dilepas
+const NP = 31;
+const ROW_Y = 132;
+const RX0 = 300;
+const RX1 = 1620;
+const RAMP = 34;
+const RLAM = 440;
+const RV = 380; // px/s
+const RT0 = 0.3; // sumber mulai bergetar
+const MARK = 19;
+const rowY = (x: number, t: number) => {
+  const tau = t - RT0 - (x - RX0) / RV;
+  if (tau <= 0) return 0;
+  return RAMP * Math.min(1, tau / 0.5) * Math.sin(((2 * Math.PI) / RLAM) * RV * tau);
+};
 
 // lingkaran acuan bawah
 const RCX = 250;
@@ -40,10 +47,10 @@ export const Title: React.FC = () => {
   const out = 1 - ramp(t, dur - 1.0, dur - 0.1, EASE_IN_OUT);
   const push = 1 + 0.035 * ramp(t, -0.8, dur, EASE_IN_OUT);
   const rig = ramp(t, 0.0, 1.2);
-  // gelombang kosinus yang menyapu huruf "Berulang"
+  // gelombang yang menyapu huruf "Berjalan"
   const wave = ramp(t, 3.3, 3.8) * (1 - ramp(t, 6.4, 7.2, EASE_IN_OUT));
   const title = BRAND.title;
-  const split = title.indexOf('Berulang');
+  const split = title.indexOf('Berjalan');
 
   const phi = ROM * Math.max(0, t - 0.6);
   const Py = RCY - RR * Math.cos(phi);
@@ -82,7 +89,7 @@ export const Title: React.FC = () => {
               <rect x={X0T - 10} y={RCY - 80} width={X1T - X0T + 20} height={160} fill="url(#ti-fade)" />
             </mask>
           </defs>
-          <Glow x={CX} y={CY} r={720} color="press" opacity={0.26 * a} />
+          <Glow x={CX} y={CY} r={720} color="cyan" opacity={0.26 * a} />
           <Glow x={CX} y={CY} r={520} color="gold" opacity={0.18 * a} />
           <Glow x={CX} y={130} r={460} color="gold" opacity={0.16 * rig} />
           {/* berkas cahaya, bergoyang pelan */}
@@ -99,24 +106,32 @@ export const Title: React.FC = () => {
             const dir = rand(i * 1.9) > 0.5 ? 1 : -1;
             const x = dir > 0 ? -20 + ph * 1960 : 1940 - ph * 1960;
             const side = Math.abs(x - CX) > 600 ? 1 : 0.2;
-            return <circle key={i} cx={x} cy={y + 14 * Math.sin(t * 1.6 + i)} r={1.5 + rand(i * 2.1) * 2} fill="#ffd9ec" opacity={0.45 * cyc(ph) * side * a} />;
+            return <circle key={i} cx={x} cy={y + 14 * Math.sin(t * 1.6 + i)} r={1.5 + rand(i * 2.1) * 2} fill="#d9f3ff" opacity={0.45 * cyc(ph) * side * a} />;
           })}
 
-          {/* gelombang bandul */}
+          {/* deretan partikel: pola berjalan, partikel hanya naik-turun */}
           <g opacity={rig}>
-            <rect x={290} y={BAR_Y - 7} width={1340} height={12} rx={6} fill="#1a2550" stroke="#7d89b5" strokeWidth={2} />
-            {PEND.map((p, i) => {
-              const th = t < REL ? TH0 : TH0 * Math.cos(((2 * Math.PI) / p.T) * (t - REL));
-              const bx = p.x + p.L * Math.sin(th);
-              const by = BAR_Y + p.L * Math.cos(th);
+            <line x1={RX0 - 30} y1={ROW_Y} x2={RX1 + 30} y2={ROW_Y} stroke={C.line} strokeWidth={2} strokeDasharray="5 9" />
+            {(() => {
+              const pts = Array.from({length: NP}, (_, i) => {
+                const x = RX0 + ((RX1 - RX0) * i) / (NP - 1);
+                return [x, ROW_Y - rowY(x, t)] as [number, number];
+              });
+              const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
               return (
-                <g key={i}>
-                  <line x1={p.x} y1={BAR_Y} x2={bx} y2={by} stroke="#c9d3ee" strokeOpacity={0.6} strokeWidth={1.8} />
-                  <circle cx={bx} cy={by} r={24} fill="url(#soft-gold)" opacity={0.5} />
-                  <circle cx={bx} cy={by} r={10} fill="url(#ti-bob)" />
-                </g>
+                <>
+                  <path d={d} fill="none" stroke={C.cyan} strokeOpacity={0.18} strokeWidth={10} strokeLinejoin="round" />
+                  <path d={d} fill="none" stroke={C.cyan} strokeOpacity={0.6} strokeWidth={2.5} strokeLinejoin="round" />
+                  <line x1={pts[MARK][0]} y1={ROW_Y - RAMP - 12} x2={pts[MARK][0]} y2={ROW_Y + RAMP + 12} stroke={C.gold} strokeOpacity={0.5} strokeWidth={2} strokeDasharray="3 5" />
+                  {pts.map(([x, y], i) => (
+                    <g key={i}>
+                      <circle cx={x} cy={y} r={i === MARK ? 26 : 18} fill={`url(#soft-${i === MARK ? 'gold' : 'cyan'})`} opacity={0.6} />
+                      <circle cx={x} cy={y} r={i === MARK ? 10 : 7.5} fill={i === MARK ? 'url(#ti-bob)' : '#bfeeff'} />
+                    </g>
+                  ))}
+                </>
               );
-            })}
+            })()}
           </g>
 
           {/* lingkaran acuan + jejak kosinus */}
@@ -129,15 +144,15 @@ export const Title: React.FC = () => {
             <circle cx={Px} cy={Py} r={6.5} fill="#fff3c4" />
             <line x1={X0T} y1={RCY} x2={X1T} y2={RCY} stroke={C.line} strokeWidth={2} />
             <g mask="url(#ti-mask)">
-              <path d={trace} fill="none" stroke={C.press} strokeOpacity={0.22} strokeWidth={12} strokeLinejoin="round" />
-              <path d={trace} fill="none" stroke={C.press} strokeWidth={3.5} strokeLinejoin="round" strokeLinecap="round" />
+              <path d={trace} fill="none" stroke={C.cyan} strokeOpacity={0.22} strokeWidth={12} strokeLinejoin="round" />
+              <path d={trace} fill="none" stroke={C.cyan} strokeWidth={3.5} strokeLinejoin="round" strokeLinecap="round" />
             </g>
-            <circle cx={X0T} cy={Py} r={16} fill="url(#soft-press)" />
+            <circle cx={X0T} cy={Py} r={16} fill="url(#soft-cyan)" />
             <circle cx={X0T} cy={Py} r={5.5} fill="#fff" />
           </g>
 
           <Ripple x={CX} y={CY} p={(t - 0.8) / 2.2} r={760} color="gold" rings={2} width={2} />
-          <Ripple x={1180} y={CY - 30} p={ramp(t, 3.4, 5.2, (x) => x)} r={520} color="press" rings={2} width={2} />
+          <Ripple x={1180} y={CY - 30} p={ramp(t, 3.4, 5.2, (x) => x)} r={520} color="cyan" rings={2} width={2} />
           <Twinkles x={CX} y={CY - 10} rx={620} ry={90} n={7} color="gold" opacity={ramp(t, 2.2, 3.0)} seed={6} />
         </Stage>
         <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center', paddingBottom: 150}}>
@@ -147,7 +162,7 @@ export const Title: React.FC = () => {
               const p = ramp(t, 0.5 + i * 0.045, 1.4 + i * 0.045, BACK);
               const bob = 4 * Math.sin(t * 1.3 - i * 0.4) * ramp(t, 1.8, 2.8);
               const hot = i >= split;
-              // huruf "Berulang" naik-turun mengikuti gelombang kosinus yang merambat
+              // huruf "Berjalan" naik-turun mengikuti gelombang yang merambat
               const wv = hot ? -12 * wave * Math.cos(t * 4.2 - (i - split) * 0.8) : 0;
               return (
                 <span
@@ -159,10 +174,10 @@ export const Title: React.FC = () => {
                     letterSpacing: -4,
                     whiteSpace: 'pre',
                     display: 'inline-block',
-                    color: hot ? C.press : C.ink,
+                    color: hot ? C.cyan : C.ink,
                     opacity: Math.min(1, p),
                     translate: `0px ${(1 - p) * 60 + bob + wv}px`,
-                    textShadow: hot ? `0 0 ${40 + 14 * Math.sin(t * 2 + i * 0.4)}px rgba(255,111,174,0.6)` : '0 0 40px rgba(255,200,140,0.22)',
+                    textShadow: hot ? `0 0 ${40 + 14 * Math.sin(t * 2 + i * 0.4)}px rgba(79,214,255,0.6)` : '0 0 40px rgba(255,200,140,0.22)',
                   }}
                 >
                   {ch}
@@ -193,7 +208,7 @@ export const Title: React.FC = () => {
             </div>
           </div>
           <div style={{fontFamily: FONT.mono, fontSize: 22, color: C.muted, marginTop: 40, opacity: ramp(t, 4.2, 5.2), letterSpacing: 3 + 2 * (1 - ramp(t, 4.2, 5.6))}}>
-            setiap getaran: <span style={{color: C.press}}>bolak-balik</span> di sekitar titik <span style={{color: C.gold}}>setimbang</span>
+            <span style={{color: C.cyan}}>pola</span> <span style={{color: C.work}}>berjalan</span>, medium <span style={{color: C.gold}}>tetap di tempat</span>
           </div>
         </AbsoluteFill>
       </AbsoluteFill>

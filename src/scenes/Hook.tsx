@@ -1,365 +1,423 @@
 import React from 'react';
 import {AbsoluteFill} from 'remotion';
-import {EASE_IN_OUT, mix, ramp, rand, win} from '../anim';
-import {Spring} from '../components/physics';
-import {Glow, Label, Motes, Ripple, Stage, Twinkles} from '../components/primitives';
+import {EASE_IN_OUT, mix, ramp, rand} from '../anim';
+import {Glow, Label, Motes, Ripple, Spark, Stage, Stream, Twinkles} from '../components/primitives';
 import {useScene} from '../SceneContext';
 import {C, FONT} from '../theme';
 
-// Pembuka: tiga osilator yang dihitung analitik per frame.
-// (A) pegas–balok: ditarik lalu dilepas, x = A cos ω(t − tr), T = 1,5 dtk;
-// (B) bandul jam: θ = θ₀ cos(2πt/T), T = 2 dtk (L = 1 m → T ≈ 2 s, AUDIT), jarum detik berdetak tiap ayunan;
-// (C) molekul HCl bergetar mengitari pusat massa (H bergerak 35× lebih jauh daripada Cl), diperlambat
-//     ("gerak lambat"; aslinya ≈ 9×10¹³ kali/detik, AUDIT hook);
-// lalu ketiganya berjajar dengan jejak x–t masing-masing → kata "osilasi" → sinar IR diserap molekul →
-// sumur parabola dengan anak tangga tingkat energi (petunjuk kuantum).
+// Pembuka: tiga gelombang, dihitung analitik per frame.
+// (A) kolam: kerikil jatuh → riak melingkar r = V(t − t₀) − nλ; daun di jarak tetap hanya naik-turun
+//     h = A cos(k r − ωτ) (setelah muka gelombang tiba);
+// (B) gitar: senar bergetar y = A(t) sin(πx/L) cos ωt (meredam), muka gelombang bunyi menyebar dan tiba di telinga
+//     beberapa saat kemudian (amplitudo muka = amplitudo senar saat dipancarkan);
+// (C) Matahari → mata: gelombang cahaya merambat menempuh ≈ 150 juta km ruang hampa (tidak berskala);
+// lalu kata "gelombang", rantai titik medium yang hanya naik-turun sementara energi (emas) mengalir,
+// dan teaser: elektron sebagai paket gelombang (ungu).
+const TAU = Math.PI * 2;
+const sm = (x: number) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+const line = (pts: [number, number][]) => pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
 
-// ---- pegas ----
-const SA = 120;
-const STP = 1.5;
-// ---- bandul ----
-const PL = 300;
-const PTH = 0.3;
-const PTP = 2.0;
-// ---- molekul ----
-const MF = 1.3; // Hz tampilan (gerak lambat)
-const MS = 24; // amplitudo regang ikatan (px)
-const FH = 34.969 / (34.969 + 1.008); // bagian H dari regangan
-const FCL = 1.008 / (34.969 + 1.008);
+// ---- kolam ----
+const PV = 105; // px/s
+const PL = 64; // jarak antar-riak
+const PK = TAU / PL;
+const PSX = -110; // titik jatuh kerikil
+const PCY = 40;
+const LEAF_R = 250;
+const ringAmp = (r: number, tauE: number) => (tauE < 0 ? 0 : Math.exp(-tauE / 9) * sm(r / 30) * Math.max(0, 1 - r / 330));
 
-const springX = (t: number, t0: number, tr: number) => (t < tr ? SA * ramp(t, t0, tr - 0.15, EASE_IN_OUT) : SA * Math.cos(((2 * Math.PI) / STP) * (t - tr)));
-const pendTh = (t: number) => PTH * Math.cos(((2 * Math.PI) / PTP) * t);
-const molS = (t: number, amp = MS) => amp * Math.cos(2 * Math.PI * MF * t);
-
-const Block: React.FC<{x: number}> = ({x}) => (
-  <g>
-    <ellipse cx={x} cy={48} rx={60} ry={6} fill="#000" opacity={0.4} />
-    <rect x={x - 55} y={-45} width={110} height={90} rx={12} fill="url(#crate)" stroke={C.ink} strokeOpacity={0.55} strokeWidth={2.5} />
-    <rect x={x - 46} y={-37} width={92} height={9} rx={4.5} fill="#fff" opacity={0.1} />
-  </g>
-);
-
-const SpringRig: React.FC<{x: number; v: number; hand: number}> = ({x, v, hand}) => (
-  <g>
-    <rect x={-360} y={45} width={640} height={50} fill="url(#ground)" />
-    <line x1={-360} y1={45} x2={280} y2={45} stroke="#7d89b5" strokeWidth={4} />
-    <rect x={-372} y={-90} width={34} height={135} fill="#1a2550" stroke="#7d89b5" strokeWidth={3} />
-    {Array.from({length: 6}, (_, i) => (
-      <line key={i} x1={-372} y1={-80 + i * 22} x2={-342} y2={-92 + i * 22} stroke="#56628f" strokeWidth={2} />
-    ))}
-    <line x1={0} y1={-70} x2={0} y2={70} stroke={C.gold} strokeOpacity={0.35} strokeWidth={2} strokeDasharray="6 8" />
-    <Spring xa={-338} xb={x - 55} y={0} coils={10} amp={22} color={C.spr} width={5} />
-    <Block x={x} />
-    {/* garis gerak di belakang balok cepat */}
-    {[0, 1, 2].map((j) => {
-      return (
-        <line
-          key={j}
-          x1={x - Math.sign(v) * (66 + j * 6)}
-          y1={-22 + j * 22}
-          x2={x - Math.sign(v) * (92 + j * 14)}
-          y2={-22 + j * 22}
-          stroke="#cfe0ff"
-          strokeOpacity={0.3 * Math.min(1, Math.abs(v) / 450) * (1 - hand)}
-          strokeWidth={2.5}
-          strokeLinecap="round"
-        />
-      );
-    })}
-    {/* tangan yang menarik */}
-    <g opacity={hand} transform={`translate(${x + 55} 0)`}>
-      <line x1={0} y1={0} x2={30} y2={0} stroke={C.muted} strokeWidth={3} />
-      <path d="M30,-5 C38,-22 58,-26 72,-19 L104,-19 L104,19 L72,19 C58,26 38,22 30,5 Z" fill="#2a3768" stroke={C.cyan} strokeOpacity={0.7} strokeWidth={2.5} />
-      <rect x={104} y={-22} width={34} height={44} rx={7} fill="#1d2754" stroke={C.cyan} strokeOpacity={0.4} strokeWidth={2} />
-    </g>
-  </g>
-);
-
-const Pendulum: React.FC<{t: number; t1: number}> = ({t, t1}) => {
-  const th = pendTh(t);
-  const bx = PL * Math.sin(th);
-  const by = -230 + PL * Math.cos(th);
-  // jarum detik berdetak tiap setengah periode (saat bandul di simpangan terjauh), bergerak halus singkat
-  const k = (t - t1) / (PTP / 2);
-  const n = Math.floor(k);
-  const f = k - n;
-  const step = n + Math.min(1, f / 0.12) ** 2 * (3 - 2 * Math.min(1, f / 0.12));
-  const ang = (step * 6 * Math.PI) / 180;
-  const tickP = f / 0.5;
+const Pond: React.FC<{t: number; drops: number[]; foc: number; naik: number}> = ({t, drops, foc, naik}) => {
+  const rings: React.ReactNode[] = [];
+  let h = 0;
+  drops.forEach((ts, d) => {
+    const tau = t - ts;
+    if (tau <= 0) return;
+    const nMax = Math.floor((PV * tau) / PL);
+    for (let n = Math.max(0, nMax - 7); n <= nMax; n++) {
+      const r = PV * tau - n * PL;
+      if (r <= 2 || r > 330) continue;
+      const a = ringAmp(r, tau - r / PV);
+      rings.push(<ellipse key={`${d}-${n}`} cx={PSX} cy={PCY} rx={r} ry={r * 0.36} fill="none" stroke="#c8f0ff" strokeWidth={1.5 + 2.5 * a} opacity={Math.min(1, a * 1.6)} />);
+    }
+    // daun: hanya naik-turun ketika muka gelombang lewat
+    const arr = sm((PV * tau - LEAF_R) / 30);
+    h += 15 * arr * ringAmp(LEAF_R, tau - LEAF_R / PV) * 2.4 * Math.cos(PK * LEAF_R - PK * PV * tau);
+  });
+  // kerikil jatuh
+  const ts0 = drops[0];
+  const fall = (t - (ts0 - 0.7)) / 0.7;
+  const fall2 = drops[1] !== undefined ? (t - (drops[1] - 0.7)) / 0.7 : -1;
+  const lx = PSX + LEAF_R;
+  const ly = PCY - h;
   return (
     <g>
-      {/* rumah jam */}
-      <path d="M-120,110 L-120,-300 Q-120,-370 0,-380 Q120,-370 120,-300 L120,110 Z" fill="rgba(26,37,80,0.55)" stroke="#7d89b5" strokeWidth={3} />
-      <path d="M-104,104 L-104,-226 L104,-226 L104,104 Z" fill="rgba(7,11,24,0.55)" stroke="#56628f" strokeWidth={2} />
-      {/* dial */}
-      <circle cx={0} cy={-300} r={56} fill="#0e1736" stroke={C.gold} strokeOpacity={0.8} strokeWidth={3} />
-      {Array.from({length: 12}, (_, i) => {
-        const a = (i / 12) * Math.PI * 2;
-        return <line key={i} x1={46 * Math.sin(a)} y1={-300 - 46 * Math.cos(a)} x2={52 * Math.sin(a)} y2={-300 - 52 * Math.cos(a)} stroke={C.gold} strokeWidth={2.5} opacity={0.8} />;
+      <defs>
+        <clipPath id="hk-pond">
+          <ellipse cx={0} cy={PCY} rx={330} ry={128} />
+        </clipPath>
+        <radialGradient id="hk-water" cx="45%" cy="40%" r="70%">
+          <stop offset="0%" stopColor="#1f5f9a" />
+          <stop offset="100%" stopColor="#0b2346" />
+        </radialGradient>
+      </defs>
+      {/* rerumputan tepi & batu */}
+      <ellipse cx={0} cy={PCY + 8} rx={350} ry={142} fill="#14223f" />
+      {Array.from({length: 14}, (_, i) => {
+        const a = (i / 14) * TAU + 0.2;
+        const x = 340 * Math.cos(a);
+        const y = PCY + 8 + 136 * Math.sin(a);
+        return <ellipse key={i} cx={x} cy={y} rx={18 + 10 * rand(i)} ry={9 + 4 * rand(i + 4)} fill="#2a3768" stroke="#56628f" strokeWidth={1.5} />;
       })}
-      <line x1={0} y1={-300} x2={26 * Math.sin(1.1 + t * 0.01)} y2={-300 - 26 * Math.cos(1.1 + t * 0.01)} stroke={C.ink} strokeWidth={4} strokeLinecap="round" />
-      <line x1={0} y1={-300} x2={44 * Math.sin(ang)} y2={-300 - 44 * Math.cos(ang)} stroke={C.press} strokeWidth={2.5} strokeLinecap="round" />
-      <circle cx={0} cy={-300} r={4} fill={C.ink} />
-      {/* bandul */}
-      <circle cx={0} cy={-230} r={5} fill="#c9d3ee" />
-      <line x1={0} y1={-230} x2={bx} y2={by} stroke="#c9d3ee" strokeWidth={3} />
-      <circle cx={bx} cy={by} r={56} fill="url(#soft-gold)" opacity={0.5} />
-      <circle cx={bx} cy={by} r={30} fill="url(#hk-bob)" stroke="#fff3c4" strokeOpacity={0.7} strokeWidth={2} />
-      <circle cx={bx - 10} cy={by - 11} r={7} fill="#fff" opacity={0.6} />
-      {/* busur ayunan */}
-      <path d={`M${PL * Math.sin(-PTH)},${-230 + PL * Math.cos(-PTH)} Q0,${-230 + PL + 22} ${PL * Math.sin(PTH)},${-230 + PL * Math.cos(PTH)}`} fill="none" stroke={C.gold} strokeOpacity={0.25} strokeWidth={2} strokeDasharray="4 8" />
-      <Ripple x={0} y={-300} p={tickP} r={80} color="gold" rings={1} width={2} />
+      <ellipse cx={0} cy={PCY} rx={330} ry={128} fill="url(#hk-water)" stroke="#3aa0ff" strokeOpacity={0.4} strokeWidth={2} />
+      <g clipPath="url(#hk-pond)">
+        {/* kilau permukaan */}
+        {Array.from({length: 6}, (_, i) => (
+          <path key={i} d={`M${-260 + i * 95 + 12 * Math.sin(t * 0.7 + i)},${PCY - 70 + i * 22} q20,-6 40,0`} fill="none" stroke="#bfe3ff" strokeOpacity={0.18} strokeWidth={2} />
+        ))}
+        {rings}
+        <Ripple x={PSX} y={PCY} p={(t - ts0) / 0.8} r={70} color="white" rings={1} width={2} />
+      </g>
+      {/* percikan */}
+      {Array.from({length: 7}, (_, i) => {
+        const tau = t - ts0;
+        if (tau <= 0 || tau > 0.9) return null;
+        const a = -Math.PI / 2 + (i - 3) * 0.32;
+        const sp = 120 + 40 * rand(i);
+        return <circle key={i} cx={PSX + Math.cos(a) * sp * tau} cy={PCY - 4 + Math.sin(a) * sp * tau + 300 * tau * tau} r={3} fill="#c8f0ff" opacity={1 - tau / 0.9} />;
+      })}
+      {[fall, fall2].map((f, i) =>
+        f > 0 && f < 1 ? (
+          <g key={i}>
+            <ellipse cx={PSX} cy={PCY - 300 + 300 * f * f} rx={14} ry={11} fill="#7d89b5" stroke="#c9d3ee" strokeWidth={2} />
+            <line x1={PSX} y1={PCY - 330 + 300 * f * f} x2={PSX} y2={PCY - 360 + 300 * f * f} stroke="#c9d3ee" strokeOpacity={0.4} strokeWidth={2} />
+          </g>
+        ) : null,
+      )}
+      {/* daun */}
+      <g opacity={naik * foc}>
+        <line x1={lx} y1={PCY - 50} x2={lx} y2={PCY + 50} stroke={C.gold} strokeOpacity={0.6} strokeWidth={2.5} strokeDasharray="4 6" />
+        <path d={`M${lx + 70},${PCY} l0,-36 m-8,10 l8,-12 l8,12 M${lx + 70},${PCY} l0,36 m-8,-10 l8,12 l8,-12`} fill="none" stroke={C.gold} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+      <ellipse cx={lx} cy={PCY + 8} rx={36} ry={8} fill="#000" opacity={0.25} />
+      <g transform={`translate(${lx} ${ly}) rotate(${-8 + 4 * Math.sin(t * 0.9)})`}>
+        <path d="M-40,0 C-20,-20 20,-20 42,0 C20,18 -20,18 -40,0 Z" fill="#4fbf6a" stroke="#bff5c9" strokeOpacity={0.7} strokeWidth={2} />
+        <path d="M-40,0 L40,0 M-12,0 l10,-9 M8,0 l10,-8 M-12,0 l10,9 M8,0 l10,8" fill="none" stroke="#1d5a2c" strokeWidth={2} />
+        <path d="M-40,0 q-12,-4 -18,4" fill="none" stroke="#4fbf6a" strokeWidth={3} strokeLinecap="round" />
+      </g>
+      <Label x={lx} y={PCY + 172} size={28} color={C.gold} weight={600} opacity={naik * foc}>
+        daun: hanya naik-turun
+      </Label>
     </g>
   );
 };
 
-const Molecule: React.FC<{t: number; amp: number}> = ({t, amp}) => {
-  const s = molS(t, amp);
-  const xCl = -62 - FCL * s;
-  const xH = 68 + FH * s;
+// ---- gitar ----
+const GX0 = -300;
+const GX1 = 110;
+const GY = 40;
+const HOLE = -175;
+const SV = 135;
+const SL = 46;
+const EAR: [number, number] = [282, 10];
+const strAmp = (tau: number) => (tau <= 0 ? 0 : 20 * sm(tau / 0.08) * Math.exp(-tau / 4.5));
+
+const Note8: React.FC<{x: number; y: number; s?: number; op: number}> = ({x, y, s = 1, op}) => (
+  <g transform={`translate(${x} ${y}) scale(${s})`} opacity={op}>
+    <ellipse cx={0} cy={0} rx={10} ry={7.5} transform="rotate(-20)" fill={C.gold} />
+    <line x1={9} y1={-2} x2={9} y2={-40} stroke={C.gold} strokeWidth={3.5} />
+    <path d="M9,-40 q14,6 12,22" fill="none" stroke={C.gold} strokeWidth={3.5} strokeLinecap="round" />
+  </g>
+);
+
+const Guitar: React.FC<{t: number; plucks: number[]; foc: number}> = ({t, plucks, foc}) => {
+  const amp = (tt: number) => plucks.reduce((s, p) => s + strAmp(tt - p), 0);
+  const A = amp(t);
+  const om = TAU * 3.2;
+  const str = Array.from({length: 41}, (_, i) => {
+    const x = GX0 + ((GX1 - GX0) * i) / 40;
+    return [x, GY + A * Math.sin((Math.PI * (x - GX0)) / (GX1 - GX0)) * Math.cos(om * t)] as [number, number];
+  });
+  const rEar = Math.hypot(EAR[0] - HOLE, EAR[1] - GY) - 26;
+  const arcs: React.ReactNode[] = [];
+  const first = plucks[0];
+  const nMax = Math.floor((SV * (t - first)) / SL);
+  for (let n = Math.max(0, nMax - 10); n <= nMax; n++) {
+    const r = SV * (t - first) - n * SL;
+    if (r < 110 || r > rEar) continue;
+    const a = Math.min(1, amp(t - r / SV) / 14);
+    const op = a * sm((r - 110) / 30) * sm((rEar - r) / 30);
+    if (op < 0.02) continue;
+    const a0 = -0.42;
+    const a1 = 0.32;
+    arcs.push(
+      <path
+        key={n}
+        d={`M${HOLE + r * Math.cos(a0)},${GY + r * Math.sin(a0)} A${r},${r} 0 0 1 ${HOLE + r * Math.cos(a1)},${GY + r * Math.sin(a1)}`}
+        fill="none"
+        stroke={C.cyan}
+        strokeWidth={3}
+        strokeLinecap="round"
+        opacity={op}
+      />,
+    );
+  }
+  const heard = sm((t - first - rEar / SV) / 0.4);
   return (
     <g>
-      <circle cx={0} cy={0} r={140} fill="url(#soft-work)" opacity={0.35} />
-      <Spring xa={xCl + 40} xb={xH - 26} y={0} coils={5} amp={10} color={C.spr} width={4} />
-      <circle cx={xCl} cy={0} r={44} fill="url(#hk-cl)" stroke="#bff5c9" strokeOpacity={0.6} strokeWidth={2} />
-      <circle cx={xCl - 14} cy={-15} r={10} fill="#fff" opacity={0.45} />
-      <circle cx={xH} cy={0} r={28} fill="url(#hk-h)" stroke="#fff" strokeOpacity={0.6} strokeWidth={2} />
-      <circle cx={xH - 9} cy={-9} r={6} fill="#fff" opacity={0.7} />
-      <text x={xCl} y={2} textAnchor="middle" dominantBaseline="central" fontFamily={FONT.head} fontWeight={700} fontSize={28} fill="#0b2a16">
-        Cl
-      </text>
-      <text x={xH} y={2} textAnchor="middle" dominantBaseline="central" fontFamily={FONT.head} fontWeight={700} fontSize={24} fill="#1c2340">
-        H
-      </text>
+      <defs>
+        <radialGradient id="hk-wood" cx="40%" cy="35%" r="75%">
+          <stop offset="0%" stopColor="#8a5a2c" />
+          <stop offset="100%" stopColor="#3b2412" />
+        </radialGradient>
+      </defs>
+      {/* badan gitar */}
+      <circle cx={-250} cy={GY} r={102} fill="url(#hk-wood)" stroke="#d9a066" strokeOpacity={0.6} strokeWidth={3} />
+      <circle cx={-120} cy={GY} r={80} fill="url(#hk-wood)" stroke="#d9a066" strokeOpacity={0.6} strokeWidth={3} />
+      <rect x={-200} y={GY - 70} width={70} height={140} fill="url(#hk-wood)" />
+      <circle cx={HOLE} cy={GY} r={32} fill="#0b0a12" stroke="#d9a066" strokeOpacity={0.5} strokeWidth={4} />
+      <rect x={-318} y={GY - 26} width={18} height={52} rx={4} fill="#1d1208" />
+      <rect x={-50} y={GY - 22} width={175} height={44} rx={4} fill="#2a1a0c" stroke="#7a5230" strokeWidth={2} />
+      {[0, 1, 2, 3, 4].map((k) => (
+        <line key={k} x1={-20 + k * 30} y1={GY - 22} x2={-20 + k * 30} y2={GY + 22} stroke="#c9d3ee" strokeOpacity={0.5} strokeWidth={2} />
+      ))}
+      <rect x={GX1} y={GY - 26} width={44} height={52} rx={8} fill="#2a1a0c" stroke="#7a5230" strokeWidth={2} />
+      {[-15, -9, -3, 9, 15].map((d) => (
+        <line key={d} x1={GX0} y1={GY + d} x2={GX1} y2={GY + d} stroke="#c9d3ee" strokeOpacity={0.35} strokeWidth={1.5} />
+      ))}
+      <path d={line(str)} fill="none" stroke={C.cyan} strokeOpacity={0.25} strokeWidth={10} />
+      <path d={line(str)} fill="none" stroke="#e8fbff" strokeWidth={2.5} />
+      {arcs}
+      {/* telinga */}
+      <g transform={`translate(${EAR[0]} ${EAR[1]})`}>
+        <circle cx={0} cy={0} r={70} fill="url(#soft-gold)" opacity={heard * (0.6 + 0.3 * Math.sin(t * 5))} />
+        <path d="M-6,-46 C28,-56 50,-26 40,4 C34,22 18,24 14,40 C10,56 -14,58 -22,44" fill="#2a3768" stroke={C.ink} strokeOpacity={0.8} strokeWidth={3} strokeLinecap="round" />
+        <path d="M-2,-28 C18,-34 30,-16 22,0 C16,10 6,8 4,18" fill="none" stroke={C.ink} strokeOpacity={0.6} strokeWidth={2.5} strokeLinecap="round" />
+      </g>
+      {[0, 1, 2].map((k) => {
+        const ph = (((t - first - rEar / SV) * 0.45 + k / 3) % 1 + 1) % 1;
+        return <Note8 key={k} x={EAR[0] + 30 + 30 * Math.sin(ph * 5 + k)} y={EAR[1] - 50 - ph * 120} s={0.9} op={heard * foc * Math.min(1, ph * 6) * (1 - ph)} />;
+      })}
     </g>
   );
 };
 
-/** Jejak x–t kecil yang tergambar langsung (pena di ujung kanan). */
-const Strip: React.FC<{x: number; y: number; w: number; amp: number; f: (tt: number) => number; t: number; op: number; color?: string}> = ({x, y, w, amp, f, t, op, color = C.press}) => {
-  if (op <= 0.01) return null;
-  const span = 2.6;
-  const pts = Array.from({length: 64}, (_, i) => {
-    const tau = t - span + (span * i) / 63;
-    return `${i ? 'L' : 'M'}${(x - w / 2 + (w * i) / 63).toFixed(1)},${(y - amp * f(tau)).toFixed(1)}`;
-  }).join(' ');
+// ---- Matahari ----
+const SUNX = -250;
+const EYEX = 270;
+const LV = 320;
+const LK = TAU / 58;
+const Sun: React.FC<{t: number; tl: number; foc: number; hampa: number; jarak: number}> = ({t, tl, foc, hampa, jarak}) => {
+  const front = SUNX + 80 + LV * Math.max(0, t - tl);
+  const x1 = Math.min(EYEX - 46, front);
+  const pts: [number, number][] =
+    x1 > SUNX + 84
+      ? Array.from({length: 70}, (_, i) => {
+          const x = SUNX + 80 + ((x1 - SUNX - 80) * i) / 69;
+          return [x, -20 + 18 * sm((x - SUNX - 80) / 40) * Math.sin(LK * x - LK * LV * t)];
+        })
+      : [];
+  const seen = sm((front - EYEX + 46) / 60);
   return (
-    <g opacity={op}>
-      <line x1={x - w / 2} y1={y} x2={x + w / 2} y2={y} stroke={C.line} strokeWidth={2} />
-      <path d={pts} fill="none" stroke={color} strokeOpacity={0.22} strokeWidth={12} strokeLinejoin="round" />
-      <path d={pts} fill="none" stroke={color} strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={x + w / 2} cy={y - amp * f(t)} r={16} fill="url(#soft-press)" />
-      <circle cx={x + w / 2} cy={y - amp * f(t)} r={6} fill="#fff" />
+    <g>
+      <defs>
+        <radialGradient id="hk-sun" cx="45%" cy="40%" r="60%">
+          <stop offset="0%" stopColor="#fffbe6" />
+          <stop offset="55%" stopColor="#ffd25a" />
+          <stop offset="100%" stopColor="#ff9a2e" />
+        </radialGradient>
+      </defs>
+      {/* bintang ruang hampa */}
+      {Array.from({length: 26}, (_, i) => (
+        <circle key={i} cx={-330 + rand(i * 3.1) * 660} cy={-190 + rand(i * 7.3) * 330} r={1 + rand(i) * 1.6} fill="#fff" opacity={(0.25 + 0.35 * (0.5 + 0.5 * Math.sin(t * (1 + rand(i + 2)) + i))) * (0.6 + 0.4 * hampa)} />
+      ))}
+      <circle cx={SUNX} cy={-20} r={150} fill="url(#soft-gold)" />
+      {Array.from({length: 12}, (_, i) => {
+        const a = (i / 12) * TAU + t * 0.25;
+        const l = 98 + 10 * Math.sin(t * 3 + i * 1.7);
+        return <line key={i} x1={SUNX + 78 * Math.cos(a)} y1={-20 + 78 * Math.sin(a)} x2={SUNX + l * Math.cos(a)} y2={-20 + l * Math.sin(a)} stroke="#ffd25a" strokeWidth={5} strokeLinecap="round" opacity={0.7} />;
+      })}
+      <circle cx={SUNX} cy={-20} r={70} fill="url(#hk-sun)" />
+      {pts.length ? (
+        <>
+          <path d={line(pts)} fill="none" stroke="#ffe08a" strokeOpacity={0.25} strokeWidth={12} />
+          <path d={line(pts)} fill="none" stroke="#ffe9a8" strokeWidth={3.5} strokeLinecap="round" />
+        </>
+      ) : null}
+      {front < EYEX - 40 ? <Spark x={x1} y={-20} r={6} color="gold" /> : null}
+      {/* mata */}
+      <g transform={`translate(${EYEX} -20)`}>
+        <circle cx={0} cy={0} r={70} fill="url(#soft-gold)" opacity={seen * 0.8} />
+        <path d="M-46,0 Q0,-36 46,0 Q0,36 -46,0 Z" fill="#e8ecf8" stroke={C.ink} strokeWidth={2.5} />
+        <circle cx={-6} cy={0} r={17} fill="#3a7bd5" />
+        <circle cx={-6} cy={0} r={8} fill="#0b0f1e" />
+        <circle cx={-11} cy={-5} r={3.5} fill="#fff" />
+        <path d="M-46,0 Q0,-44 46,0" fill="none" stroke={C.ink} strokeOpacity={0.5} strokeWidth={2} transform={`translate(0 ${-4 - 2 * Math.sin(t * 0.8)})`} />
+      </g>
+      {/* jarak */}
+      <g opacity={jarak * foc}>
+        <path d={`M${SUNX + 80},${110} L${SUNX + 80},${124} L${EYEX - 50},${124} L${EYEX - 50},${110}`} fill="none" stroke={C.gold} strokeWidth={3} />
+        <Label x={(SUNX + EYEX) / 2 + 15} y={158} size={28} color={C.gold} weight={600}>
+          ≈ 150 juta km
+        </Label>
+      </g>
+      <Label x={(SUNX + EYEX) / 2 + 15} y={-150} size={26} color={C.muted} font="mono" opacity={hampa * foc}>
+        ruang hampa · tanpa medium
+      </Label>
     </g>
   );
 };
+
+const Frame: React.FC<{color: string; op: number}> = ({color, op}) => (
+  <rect x={-370} y={-225} width={740} height={450} rx={28} fill="rgba(13,20,48,0.5)" stroke={color} strokeOpacity={0.35} strokeWidth={2.5} opacity={op} />
+);
+
+const SLOT_Y = 292;
+const SLOT_S = 0.5;
+const SLOTS = [400, 960, 1520];
 
 export const Hook: React.FC = () => {
   const {t, cue, wordOf, dur} = useScene();
-  const t0 = wordOf(0, 'tarik') - 0.1;
-  const tr = wordOf(0, 'lepaskan') + 0.1;
-  const sx = springX(t, t0, tr);
-  const hand = ramp(t, t0 - 0.6, t0) * (1 - ramp(t, tr - 0.05, tr + 0.4, EASE_IN_OUT));
+  const c = [0, 1, 2, 3, 4, 5].map(cue);
 
-  // posisi tiap objek: "pahlawan" (besar) → panel berjajar
-  const mS = ramp(t, cue(1) - 0.6, cue(1) + 0.7, EASE_IN_OUT);
-  const mP = ramp(t, cue(2) - 0.6, cue(2) + 0.7, EASE_IN_OUT);
-  const mM = ramp(t, cue(3) - 0.6, cue(3) + 0.7, EASE_IN_OUT);
-  const sPos = {x: mix(1000, 400, mS), y: mix(540, 440, mS), s: mix(1.35, 0.78, mS)};
-  const pPos = {x: mix(1060, 960, mP), y: mix(600, 500, mP), s: mix(1.0, 0.78, mP)};
-  const mPos = {x: mix(1300, 1520, mM), y: mix(470, 430, mM), s: mix(1.9, 1.0, mM)};
-  const pIn = ramp(t, cue(1) - 0.3, cue(1) + 0.6);
-  const mIn = ramp(t, cue(2) - 0.3, cue(2) + 0.6);
-  const focusM = win(t, cue(2) - 0.3, cue(3) - 0.2, 0.6, 0.8);
-  const dimS = 1 - 0.55 * win(t, cue(1) + 0.3, cue(3) - 0.4, 0.6, 0.8);
-  const dimP = 1 - 0.55 * focusM;
-  const strips = win(t, cue(3) - 0.2, wordOf(4, 'osilasi') - 0.4, 0.7, 0.6);
-  const word = ramp(t, wordOf(4, 'osilasi') - 0.2, wordOf(4, 'osilasi') + 0.5);
-  const molHi = win(t, wordOf(5, 'molekul') - 0.3, dur, 0.6, 0.8);
-  const irP = ramp(t, wordOf(5, 'inframerah') - 0.4, wordOf(5, 'inframerah') + 1.2, EASE_IN_OUT);
-  const irOn = ramp(t, wordOf(5, 'inframerah') - 0.4, wordOf(5, 'inframerah'));
-  const absorbed = ramp(t, wordOf(5, 'inframerah') + 0.8, wordOf(5, 'inframerah') + 1.6);
-  const q = ramp(t, wordOf(5, 'kuantum') - 0.6, wordOf(5, 'kuantum') + 0.8);
-  const pendFade = 1 - q;
-  const push = 1 + 0.03 * ramp(t, -0.8, dur, EASE_IN_OUT);
-  const intro = ramp(t, -0.6, 0.8);
+  const drops = [wordOf(0, 'kolam') + 0.35, c[3] + 0.3];
+  const plucks = [wordOf(1, 'Petik') + 0.35, c[3] + 0.6];
+  const tl = wordOf(2, 'Cahaya') + 0.2;
 
-  // sumur parabola (petunjuk kuantum)
-  const BX = 960;
-  const BB = 600;
-  const BW = 270;
-  const BT = 230;
-  const cK = (BB - BT) / (BW * BW);
-  const bowl = Array.from({length: 41}, (_, i) => {
-    const dx = -BW + (2 * BW * i) / 40;
-    return `${i ? 'L' : 'M'}${(BX + dx).toFixed(1)},${(BB - cK * dx * dx).toFixed(1)}`;
-  }).join(' ');
-  const rungs = [0, 1, 2, 3, 4].map((n) => {
-    const y = BB - (n + 0.5) * 68;
-    return {y, w: Math.sqrt((BB - y) / cK), n};
+  const inA = ramp(t, -0.6, 0.6);
+  const mvA = ramp(t, c[1] - 0.6, c[1] + 0.5, EASE_IN_OUT);
+  const inB = ramp(t, c[1] - 0.2, c[1] + 0.7);
+  const mvB = ramp(t, c[2] - 0.6, c[2] + 0.5, EASE_IN_OUT);
+  const inC = ramp(t, c[2] - 0.2, c[2] + 0.7);
+  const mvC = ramp(t, c[3] - 0.6, c[3] + 0.5, EASE_IN_OUT);
+  const outRow = 1 - ramp(t, c[5] - 0.5, c[5] + 0.5, EASE_IN_OUT);
+
+  const pos = (fx: number, fy: number, fs: number, k: number, mv: number) => ({x: mix(fx, SLOTS[k], mv), y: mix(fy, SLOT_Y, mv), s: mix(fs, SLOT_S, mv)});
+  const pA = pos(960, 470, 1.5, 0, mvA);
+  const pB = pos(960, 625, 1.2, 1, mvB);
+  const pC = pos(960, 640, 1.2, 2, mvC);
+
+  const naik = ramp(t, wordOf(0, 'naik') - 0.4, wordOf(0, 'naik') + 0.4);
+  const jarak = ramp(t, wordOf(2, 'kilometer') - 0.6, wordOf(2, 'kilometer') + 0.3);
+  const hampa = ramp(t, wordOf(2, 'hampa') - 0.5, wordOf(2, 'hampa') + 0.3);
+  const tags = ramp(t, c[3] - 0.1, c[3] + 0.7) * outRow;
+  const wordT = wordOf(3, 'gelombang');
+  const word = ramp(t, wordT - 0.3, wordT + 0.4) * outRow;
+  const chain = ramp(t, c[4] - 0.2, c[4] + 0.6) * outRow;
+  const energi = ramp(t, wordOf(4, 'energi') - 0.3, wordOf(4, 'energi') + 0.4);
+  const materi = ramp(t, wordOf(4, 'materi') - 0.3, wordOf(4, 'materi') + 0.4);
+
+  // ---- rantai titik medium (baris 4) ----
+  const CY = 790;
+  const cPts: [number, number][] = Array.from({length: 25}, (_, i) => {
+    const x = 460 + i * 41.7;
+    return [x, CY - 26 * Math.sin(TAU * (x / 330) - TAU * 0.8 * t)];
   });
 
-  // molekul latar (tiap molekul bergetar)
-  const field = Array.from({length: 14}, (_, i) => {
-    const a = rand(i * 3.7) * Math.PI * 2;
-    const rr = 430 + rand(i * 1.9) * 330;
-    return {x: 1300 + rr * Math.cos(a) * 1.15, y: 500 + rr * Math.sin(a) * 0.55, r: rand(i * 5.1) * 360, ph: rand(i * 2.3) * 6, k: i};
-  }).filter((m) => m.x > 120 && m.x < 1800 && m.y > 180 && m.y < 860);
-
-  const irHead = mix(1880, mPos.x + 110, irP);
-  const irPts = Array.from({length: 50}, (_, i) => {
-    const X = irHead + ((1880 - irHead) * i) / 49;
-    const env = Math.min(1, (X - irHead) / 50);
-    return `${i ? 'L' : 'M'}${X.toFixed(1)},${(mPos.y + 18 * env * Math.sin((X - 1880) * 0.06 + t * 9)).toFixed(1)}`;
-  }).join(' ');
+  // ---- elektron (baris 5) ----
+  const e5 = c[5];
+  const eIn = ramp(t, e5 - 0.2, e5 + 0.6);
+  const pk = ramp(t, wordOf(5, 'gelombang') - 0.6, wordOf(5, 'gelombang') + 0.5);
+  const xc = 330 + 150 * (t - e5);
+  const ePts: [number, number][] = Array.from({length: 130}, (_, i) => {
+    const x = xc - 360 + (720 * i) / 129;
+    const env = Math.exp(-(((x - xc) / 150) ** 2));
+    return [x, 520 - 70 * pk * env * Math.sin(TAU * (x / 70) - TAU * 1.6 * t)];
+  });
+  const atom = ramp(t, wordOf(5, 'kuantum') - 0.4, wordOf(5, 'kuantum') + 0.8);
+  const ring = Array.from({length: 97}, (_, i) => {
+    const a = (i / 96) * TAU;
+    const r = 120 + 16 * Math.sin(5 * a) * Math.cos(TAU * 0.9 * t);
+    return [1500 + r * Math.cos(a), 520 + r * 0.92 * Math.sin(a)] as [number, number];
+  });
+  const end = 1 - ramp(t, dur - 0.6, dur + 0.4, EASE_IN_OUT);
 
   return (
-    <AbsoluteFill style={{opacity: intro}}>
-      <AbsoluteFill style={{transform: `scale(${push})`, transformOrigin: '960px 500px'}}>
-        <Stage>
-          <defs>
-            <radialGradient id="hk-bob" cx="35%" cy="30%" r="75%">
-              <stop offset="0%" stopColor="#fff6d6" />
-              <stop offset="45%" stopColor="#e0a93a" />
-              <stop offset="100%" stopColor="#5a3b0e" />
-            </radialGradient>
-            <radialGradient id="hk-cl" cx="35%" cy="30%" r="75%">
-              <stop offset="0%" stopColor="#c8ffd2" />
-              <stop offset="50%" stopColor="#5fdc7a" />
-              <stop offset="100%" stopColor="#1d5c2c" />
-            </radialGradient>
-            <radialGradient id="hk-h" cx="35%" cy="30%" r="75%">
-              <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="60%" stopColor="#dfe5f7" />
-              <stop offset="100%" stopColor="#7b86a8" />
-            </radialGradient>
-          </defs>
-          <Glow x={960} y={500} r={760} color="press" opacity={0.14} />
-          <Motes x={960} y={500} rx={860} ry={330} n={30} color="gold" opacity={0.35} seed={21} />
+    <AbsoluteFill style={{opacity: end}}>
+      <Stage>
+        <Motes x={960} y={520} rx={900} ry={340} n={34} color="cyan" opacity={0.35} seed={2} />
+        {/* panel A: kolam */}
+        <g opacity={inA * outRow} transform={`translate(${pA.x} ${pA.y}) scale(${pA.s})`}>
+          <Frame color={C.cyan} op={mvA} />
+          <Pond t={t} drops={drops} foc={1 - mvA} naik={naik} />
+        </g>
+        {/* panel B: gitar */}
+        <g opacity={inB * outRow} transform={`translate(${pB.x} ${pB.y}) scale(${pB.s})`}>
+          <Frame color={C.cyan} op={mvB} />
+          <Guitar t={t} plucks={plucks} foc={1} />
+        </g>
+        {/* panel C: Matahari */}
+        <g opacity={inC * outRow} transform={`translate(${pC.x} ${pC.y}) scale(${pC.s})`}>
+          <Frame color={C.gold} op={mvC} />
+          <Sun t={t} tl={tl} foc={1 - mvC} hampa={hampa} jarak={jarak} />
+        </g>
+        <Label x={pB.x} y={pB.y + 205 * pB.s} size={28} color={C.cyan} font="mono" opacity={inB * (1 - mvB) * ramp(t, wordOf(1, 'mendengar') - 0.4, wordOf(1, 'mendengar') + 0.3)}>
+          bunyi tiba beberapa saat kemudian
+        </Label>
+        {/* label tiap gelombang */}
+        {['riak air', 'bunyi', 'cahaya'].map((s, k) => (
+          <Label key={s} x={SLOTS[k]} y={SLOT_Y + 145} size={30} color={k === 2 ? C.gold : C.cyan} weight={600} opacity={tags}>
+            {s}
+          </Label>
+        ))}
+        <Ripple x={960} y={SLOT_Y} p={ramp(t, c[3] - 0.1, c[3] + 1.6, (z) => z)} r={760} color="cyan" rings={2} width={2} />
 
-          {/* molekul latar: setiap molekul bergetar */}
-          <g opacity={0.32 * win(t, cue(2) - 0.2, cue(3) + 0.4, 0.8, 1.0)}>
-            {field.map((m) => {
-              const s = 7 * Math.cos(2 * Math.PI * MF * (t + m.ph));
-              return (
-                <g key={m.k} transform={`translate(${m.x} ${m.y}) rotate(${m.r}) scale(0.32)`}>
-                  <circle cx={-62 - FCL * s * 3} cy={0} r={44} fill="#5fdc7a" />
-                  <line x1={-20} y1={0} x2={40 + FH * s * 3} y2={0} stroke={C.spr} strokeWidth={8} />
-                  <circle cx={68 + FH * s * 3} cy={0} r={28} fill="#dfe5f7" />
-                </g>
-              );
-            })}
-          </g>
-
-          {/* sumur parabola + anak tangga tingkat energi (kuantum) */}
-          <g opacity={q}>
-            <Glow x={BX} y={BB - 120} r={330} color="work" opacity={0.3} />
-            <path d={bowl} fill="none" stroke={C.spr} strokeOpacity={0.25} strokeWidth={16} />
-            <path d={bowl} fill="none" stroke={C.spr} strokeWidth={4} />
-            {rungs.map((r) => (
-              <g key={r.n} opacity={ramp(t, wordOf(5, 'kuantum') - 0.4 + r.n * 0.18, wordOf(5, 'kuantum') + 0.2 + r.n * 0.18)}>
-                <line x1={BX - r.w} y1={r.y} x2={BX + r.w} y2={r.y} stroke={C.work} strokeWidth={4} strokeLinecap="round" opacity={0.85 - r.n * 0.1} />
-              </g>
-            ))}
-            <circle cx={BX + rungs[0].w * 0.8 * Math.sin(t * 2.6)} cy={rungs[0].y} r={22} fill="url(#soft-work)" />
-            <circle cx={BX + rungs[0].w * 0.8 * Math.sin(t * 2.6)} cy={rungs[0].y} r={7} fill={C.work} />
-            <Label x={BX + BW + 30} y={BT + 30} size={24} font="serif" italic color={C.work} anchor="start">
-              E
-            </Label>
-            <Twinkles x={BX} y={BB - 180} rx={220} ry={130} n={5} color="work" opacity={0.8} seed={9} />
-          </g>
-
-          {/* (A) pegas */}
-          <g transform={`translate(${sPos.x} ${sPos.y}) scale(${sPos.s})`} opacity={dimS}>
-            <Glow x={0} y={0} r={300} color="spr" opacity={0.3} />
-            <SpringRig x={sx} v={(springX(t + 1 / 60, t0, tr) - springX(t - 1 / 60, t0, tr)) * 30} hand={hand} />
-          </g>
-          {/* (B) bandul jam */}
-          <g transform={`translate(${pPos.x} ${pPos.y}) scale(${pPos.s})`} opacity={pIn * dimP * pendFade}>
-            <Pendulum t={t - cue(1) + 0.3} t1={0} />
-          </g>
-          {/* (C) molekul HCl */}
-          <g transform={`translate(${mPos.x} ${mPos.y}) scale(${mPos.s})`} opacity={mIn}>
-            <circle cx={0} cy={0} r={150} fill="url(#soft-heat)" opacity={0.6 * molHi + 0.6 * absorbed * irOn} />
-            <Molecule t={t} amp={MS * (1 + 0.35 * absorbed)} />
-          </g>
-          <Ripple x={mPos.x} y={mPos.y} p={ramp(t, wordOf(5, 'molekul') - 0.2, wordOf(5, 'molekul') + 1.2, (z) => z)} r={180} color="work" rings={2} />
-          <Ripple x={mPos.x} y={mPos.y} p={ramp(t, wordOf(5, 'inframerah') + 0.7, wordOf(5, 'inframerah') + 2.0, (z) => z)} r={200} color="heat" rings={2} />
-          {/* sinar IR */}
-          <g opacity={irOn * (1 - absorbed * 0.7)}>
-            <path d={irPts} fill="none" stroke={C.heat} strokeOpacity={0.25} strokeWidth={14} />
-            <path d={irPts} fill="none" stroke={C.heat} strokeWidth={4} strokeLinecap="round" />
-            <Label x={1760} y={mPos.y + 56} size={22} color={C.heat} font="mono" opacity={1 - absorbed}>
-              IR
-            </Label>
-          </g>
-          {/* label molekul */}
-          <g opacity={mIn}>
-            <g opacity={1 - mM}>
-              <rect x={mPos.x - 120} y={mPos.y + 112} width={240} height={42} rx={21} fill="rgba(10,16,36,0.85)" stroke={C.heat} strokeOpacity={0.6} strokeWidth={2} />
-              <text x={mPos.x} y={mPos.y + 134} textAnchor="middle" dominantBaseline="central" fontFamily={FONT.mono} fontSize={22} fill={C.heat}>
-                ◷ gerak lambat
-              </text>
-              <Label x={mPos.x} y={mPos.y + 186} size={24} color={C.muted} font="sans">
-                aslinya ≈ 9 × 10¹³ getaran per detik
-              </Label>
+        {/* rantai medium + aliran energi */}
+        <g opacity={chain}>
+          <path d={line(cPts)} fill="none" stroke={C.cyan} strokeOpacity={0.5} strokeWidth={2.5} />
+          {cPts.map(([x, y], i) => (
+            <g key={i}>
+              <line x1={x} y1={CY - 30} x2={x} y2={CY + 30} stroke={C.faint} strokeWidth={1.5} opacity={0.6} />
+              <circle cx={x} cy={y} r={i === 12 ? 9 : 6.5} fill={i === 12 ? C.cyan : '#9fdcff'} stroke={i === 12 ? '#fff' : 'none'} strokeWidth={2} />
             </g>
-            <Label x={mPos.x} y={mPos.y + 100} size={20} color={C.heat} font="mono" opacity={mM}>
-              HCl · gerak lambat
-            </Label>
-          </g>
+          ))}
+          <Stream pts={cPts.map(([x, y]) => [x, y - 2] as [number, number])} color="gold" n={7} speed={0.22} r={9} jitter={0} opacity={energi} />
+          <Label x={440} y={CY + 64} size={24} color={C.cyan} anchor="start" opacity={materi} font="sans">
+            materi: tetap di tempat
+          </Label>
+          <Label x={1480} y={CY + 64} size={24} color={C.gold} anchor="end" opacity={energi} weight={600}>
+            energi: berpindah →
+          </Label>
+        </g>
 
-          {/* jejak x–t tiap osilator */}
-          <Strip x={400} y={690} w={340} amp={42} f={(tt) => springX(tt, t0, tr) / SA} t={t} op={strips} />
-          <Strip x={960} y={690} w={340} amp={42} f={(tt) => Math.sin(pendTh(tt - cue(1) + 0.3)) / Math.sin(PTH)} t={t} op={strips} />
-          <Strip x={1520} y={690} w={340} amp={42} f={(tt) => molS(tt, 1)} t={t} op={strips} />
-          <g opacity={strips}>
-            {[400, 960, 1520].map((x, i) => (
-              <Label key={i} x={x - 170} y={636} size={20} font="serif" italic color={C.press} anchor="start">
-                {['x', 'θ', 'r'][i]}
-              </Label>
-            ))}
+        {/* elektron sebagai gelombang */}
+        <g opacity={eIn}>
+          <Glow x={xc} y={520} r={300} color="spr" opacity={0.5} />
+          <path d={line(ePts)} fill="none" stroke={C.spr} strokeOpacity={0.25} strokeWidth={14} />
+          <path d={line(ePts)} fill="none" stroke={C.spr} strokeWidth={4} strokeLinecap="round" opacity={pk} />
+          <Spark x={xc} y={520} r={10} color="spr" opacity={1 - 0.75 * pk} trail={[1, 2, 3, 4].map((k) => [xc - k * 16, 520] as [number, number])} />
+          <Label x={xc} y={400} size={34} color={C.spr} weight={600}>
+            elektron
+          </Label>
+          <Label x={xc} y={650} size={22} color={C.muted} font="mono" opacity={pk}>
+            berperilaku seperti gelombang
+          </Label>
+          <g opacity={atom}>
+            <circle cx={1500} cy={520} r={200} fill="url(#soft-spr)" />
+            <path d={line(ring)} fill="none" stroke={C.spr} strokeOpacity={0.25} strokeWidth={12} />
+            <path d={line(ring)} fill="none" stroke={C.spr} strokeWidth={3.5} />
+            <circle cx={1500} cy={520} r={14} fill={C.heat} stroke="#ffd0d6" strokeWidth={2} />
           </g>
-
-          {/* garis kosinus emas di bawah kata "osilasi" */}
-          <g opacity={word}>
-            {(() => {
-              const w = 560 * ramp(t, wordOf(4, 'osilasi') - 0.1, wordOf(4, 'osilasi') + 1.2, EASE_IN_OUT);
-              if (w < 4) return null;
-              const d = Array.from({length: 61}, (_, i) => {
-                const X = 960 - w + (2 * w * i) / 60;
-                const e = Math.cos(((X - 960) / 560) * (Math.PI / 2));
-                return `${i ? 'L' : 'M'}${X.toFixed(1)},${(830 + 16 * e * Math.cos((X - 960) * 0.045 - t * 5)).toFixed(1)}`;
-              }).join(' ');
-              return (
-                <>
-                  <path d={d} fill="none" stroke={C.gold} strokeOpacity={0.25} strokeWidth={12} />
-                  <path d={d} fill="none" stroke={C.gold} strokeWidth={3.5} strokeLinecap="round" />
-                </>
-              );
-            })()}
-          </g>
-          <Ripple x={960} y={730} p={ramp(t, wordOf(4, 'osilasi') - 0.1, wordOf(4, 'osilasi') + 1.4, (z) => z)} r={520} color="gold" rings={2} width={2} />
-        </Stage>
-      </AbsoluteFill>
-      {/* kata "osilasi": huruf mengikuti gelombang kosinus */}
-      <div style={{position: 'absolute', left: 0, right: 0, top: 650, display: 'flex', justifyContent: 'center', opacity: word}}>
-        {'osilasi'.split('').map((ch, i) => {
-          const p = ramp(t, wordOf(4, 'osilasi') - 0.2 + i * 0.05, wordOf(4, 'osilasi') + 0.5 + i * 0.05);
-          const bob = 10 * Math.cos(t * 3.2 - i * 0.7);
+          <Twinkles x={1500} y={520} rx={180} ry={150} n={5} color="spr" opacity={0.7 * atom} seed={4} />
+        </g>
+      </Stage>
+      {/* kata "gelombang": huruf mengikuti gelombang yang berjalan */}
+      <div style={{position: 'absolute', left: 0, right: 0, top: 520, display: 'flex', justifyContent: 'center', opacity: word}}>
+        {'gelombang'.split('').map((ch, i) => {
+          const p = ramp(t, wordT - 0.2 + i * 0.05, wordT + 0.5 + i * 0.05);
+          const bob = 14 * Math.sin(TAU * 0.8 * t - i * 0.7);
           return (
             <span
               key={i}
               style={{
                 fontFamily: FONT.head,
                 fontWeight: 700,
-                fontSize: 128,
+                fontSize: 132,
                 letterSpacing: 2,
                 display: 'inline-block',
                 color: C.ink,
                 opacity: p,
                 translate: `0px ${(1 - p) * 40 + bob}px`,
-                textShadow: `0 0 ${36 + 12 * Math.sin(t * 2 + i)}px rgba(255,111,174,0.55)`,
+                textShadow: `0 0 ${36 + 12 * Math.sin(t * 2 + i)}px rgba(79,214,255,0.55)`,
               }}
             >
               {ch}
@@ -370,4 +428,3 @@ export const Hook: React.FC = () => {
     </AbsoluteFill>
   );
 };
-
